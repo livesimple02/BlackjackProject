@@ -1,11 +1,14 @@
-package com.skilldistillery.cards.common;
+package com.skilldistillery.cards.blackjack;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import com.skilldistillery.cards.common.Dealer;
+import com.skilldistillery.cards.common.Player;
+
 public class BlackjackLogic {
 
-	public boolean checkForBlackJack(Table table) {
+	public boolean checkForBlackJack(BlackjackTable table) {
 		List<Player> playersWithBlackjack = new ArrayList<>();
 		boolean dealerHasBlackjack = false;
 		boolean roundContinues = true;
@@ -129,7 +132,7 @@ public class BlackjackLogic {
 	
 	
 	
-	public void printResults(Table table) {
+	public void printResults(BlackjackTable table) {
 		int tableSize = table.getPlayersAtTable().size();
 		Dealer dealer = (Dealer)(table.getPlayersAtTable().get(tableSize -1));
 		int dealerTotal = dealer.getPlayerHand().getValueOfCardsInHand();

@@ -3,11 +3,9 @@ package com.skilldistillery.cards.blackjack;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
-import com.skilldistillery.cards.common.BlackjackLogic;
 import com.skilldistillery.cards.common.Card;
 import com.skilldistillery.cards.common.Dealer;
 import com.skilldistillery.cards.common.Player;
-import com.skilldistillery.cards.common.Table;
 
 public class BlackJackApp {
 
@@ -21,7 +19,7 @@ public class BlackJackApp {
 		boolean keepPlaying = true;
 		
 		// Initial Game Setup
-		Table table = app.setupGame(input);
+		BlackjackTable table = app.setupGame(input);
 		
 		// Allows play for more than 1 round
 		while (keepPlaying) {
@@ -42,7 +40,7 @@ public class BlackJackApp {
 	
 	
 	// Initial Game Setup
-	public Table setupGame(Scanner input) {
+	public BlackjackTable setupGame(Scanner input) {
 		int numOfPlayers = 0;
 		int numOfDecks = 0;
 		
@@ -51,7 +49,7 @@ public class BlackJackApp {
 		numOfPlayers = getUserIntInput(input, 4);
 		System.out.print("How many decks will this game use?: ");
 		numOfDecks = getUserIntInput(input, 100);
-		Table table = new Table (numOfDecks, numOfPlayers, true);
+		BlackjackTable table = new BlackjackTable (numOfDecks, numOfPlayers, true);
 		for (int i = 0; i < numOfPlayers; i++) {
 			System.out.print("Please name Player " + (i+1) + ": ");
 			String playerName = getUserStringInput(input);
@@ -63,7 +61,7 @@ public class BlackJackApp {
 	
 	
 	// Deal 2 cards to all players and check for Blackjack
-	public boolean startRound(Table table, BlackjackLogic logic) {
+	public boolean startRound(BlackjackTable table, BlackjackLogic logic) {
 		table.getDeck().shuffleDeck();
 		for (int i = 0; i < 2; i++) {
 			for (Player player : table.getPlayersAtTable()) {
@@ -79,7 +77,7 @@ public class BlackJackApp {
 	
 	// For each players turn, ask for actions
 	// Once all players have gone, automatically perform dealer actions
-	public void bettingRound(Table table, Scanner input) {
+	public void bettingRound(BlackjackTable table, Scanner input) {
 		
 		for (Player player : table.getPlayersAtTable()) {
 			
@@ -149,7 +147,7 @@ public class BlackJackApp {
 	
 	
 	// Check with user whether they want to play another round or not
-	public Boolean keepPlaying(Table table, Scanner input) {
+	public Boolean keepPlaying(BlackjackTable table, Scanner input) {
 		System.out.println();
 		System.out.print("Would you like to play another Round? 'Y' or 'N': ");
 		String userReponse = getEitherOrReponse(input, "y", "n");

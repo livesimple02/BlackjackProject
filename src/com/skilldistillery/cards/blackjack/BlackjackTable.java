@@ -1,15 +1,20 @@
-package com.skilldistillery.cards.common;
+package com.skilldistillery.cards.blackjack;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Table {
+import com.skilldistillery.cards.common.Card;
+import com.skilldistillery.cards.common.Dealer;
+import com.skilldistillery.cards.common.Deck;
+import com.skilldistillery.cards.common.Player;
+
+public class BlackjackTable {
 
 	Deck deck;
 	List<Player> playersAtTable = new ArrayList<>();
 
 	
-	public Table(int deckSize, int numOfPlayers, boolean hasDealer) {
+	public BlackjackTable(int deckSize, int numOfPlayers, boolean hasDealer) {
 		this.deck = new Deck(deckSize);
 		for (int i = 0; i < numOfPlayers; i++) {
 			playersAtTable.add(new Player());
