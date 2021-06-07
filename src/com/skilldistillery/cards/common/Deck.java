@@ -8,18 +8,25 @@ public class Deck {
 
 	private List<Card> deck = new ArrayList<>();
 	
-	public Deck() {
-//		List<Card> deck = new ArrayList<>();
+	
+	public Deck(int numOfDecks) {
 		Rank[] ranks = Rank.values();
 		Suit[] suits = Suit.values();
 		
-		for (Suit suit : suits) {
-			for (Rank rank : ranks) {
-				Card cardToAdd = new Card(suit, rank);
-				this.deck.add(cardToAdd);
+		for (int i = 0; i < numOfDecks; i++) {
+			for (Suit suit : suits) {
+				for (Rank rank : ranks) {
+					Card cardToAdd = new Card(suit, rank);
+					this.deck.add(cardToAdd);
+				}
 			}
 		}
 	}
+	
+	public Deck() {
+		this(1);
+	}
+	
 	
 	public int checkDeckSize() {
 		return deck.size();
@@ -32,8 +39,16 @@ public class Deck {
 		return null;
 	}
 	
-	public void shuffle() {
+	public void shuffleDeck() {
 		Collections.shuffle(deck);
+	}
+	
+	public List<Card> getCardsInDeck() {
+		return deck;
+	}
+	
+	public void addCardToDeck(Card card) {
+		deck.add(card);
 	}
 	
 	
