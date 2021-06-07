@@ -95,7 +95,7 @@ public class Table {
 			}
 		}
 		
-		
+		System.out.println();
 		System.out.printf("--------------------------------------------------\n");
 		System.out.printf("| %26s                     |\n", dealer);
 		System.out.printf("| %28s                   |\n", dealerCount);

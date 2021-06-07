@@ -1,10 +1,9 @@
 package com.skilldistillery.cards.blackjack;
 
-import java.util.ArrayList;
 import java.util.InputMismatchException;
-import java.util.List;
 import java.util.Scanner;
 
+import com.skilldistillery.cards.common.BlackjackLogic;
 import com.skilldistillery.cards.common.Card;
 import com.skilldistillery.cards.common.Dealer;
 import com.skilldistillery.cards.common.Player;
@@ -17,25 +16,141 @@ public class BlackJackApp {
 
 		Scanner input = new Scanner(System.in);
 		BlackJackApp app = new BlackJackApp();
+		BlackjackLogic logic = new BlackjackLogic();
 		boolean roundContinues = true;
 		boolean keepPlaying = true;
 		
+		// Initial Game Setup
 		Table table = app.setupGame(input);
 		
+		// Allows play for more than 1 round
 		while (keepPlaying) {
+			// Remove any cards from player hands and return them to the deck
 			table.resetDeck();
-			roundContinues = app.startRound(table);
+			// Deal cards and check for Blackjack. End the game if applicable as a result of Blackjacks
+			roundContinues = app.startRound(table, logic);
+			// As long as Blackjacks haven't ended the round,
+			//go through betting round and then print the final results once all players have completed their turn
 			if (roundContinues) {
 				app.bettingRound(table, input);
-				app.printResults(table);			
+				logic.printResults(table);			
 			}
+			// Check with user whether they would like to play another round
 			keepPlaying = app.keepPlaying(table, input);
-
 		}
-		
 	}
 	
+	
+	// Initial Game Setup
+	public Table setupGame(Scanner input) {
+		int numOfPlayers = 0;
+		int numOfDecks = 0;
+		
+		System.out.println("Welcome to Blackjack!");
+		System.out.print("How many players will be playing? Choose up to 4 NOT including the dealer: ");
+		numOfPlayers = getUserIntInput(input, 4);
+		System.out.print("How many decks will this game use?: ");
+		numOfDecks = getUserIntInput(input, 100);
+		Table table = new Table (numOfDecks, numOfPlayers, true);
+		for (int i = 0; i < numOfPlayers; i++) {
+			System.out.print("Please name Player " + (i+1) + ": ");
+			String playerName = getUserStringInput(input);
+			table.getPlayersAtTable().get(i).setPlayerName(playerName);
+		}
+		return table;		
+	}
+	
+	
+	
+	// Deal 2 cards to all players and check for Blackjack
+	public boolean startRound(Table table, BlackjackLogic logic) {
+		table.getDeck().shuffleDeck();
+		for (int i = 0; i < 2; i++) {
+			for (Player player : table.getPlayersAtTable()) {
+				player.getPlayerHand().addCardToHand(table.getDeck().dealCard());
+			}
+		}	
+		table.printBlackjackTable(true);
+		logic = new BlackjackLogic();
+		return logic.checkForBlackJack(table);
+	}
+	
+	
+	
+	// For each players turn, ask for actions
+	// Once all players have gone, automatically perform dealer actions
+	public void bettingRound(Table table, Scanner input) {
+		
+		for (Player player : table.getPlayersAtTable()) {
+			
+			String playerName = player.getPlayerName();
+			int playerCardTotal = player.getPlayerHand().getValueOfCardsInHand();
+			boolean playerStays = false;
+			
+			if (playerCardTotal == 21) {
+				playerStays = true;
+				continue;
+			}
+			
+			// Dealer Turn
+			if (player instanceof Dealer) {
+				table.printBlackjackTable(false); // false flag reveals dealers first card at the start of their turn
+				while (!playerStays) {
+					if (playerCardTotal > 16) {
+						System.out.println(playerName + " stays with " + playerCardTotal);
+						playerStays = true;
+					}
+					else {
+						Card cardDrawn = table.getDeck().dealCard();
+						player.getPlayerHand().addCardToHand(cardDrawn);
+						playerCardTotal += cardDrawn.getValue();
+						System.out.println(playerName + " hits and got a " + cardDrawn.toString() + " and now has " + playerCardTotal);
+						if (playerCardTotal > 21) {
+							System.out.println(playerName + " Busts!");
+							playerStays = true;
+						}
+					}
+				}
+			}
+			
+			// Player turn
+			else {
+				table.printBlackjackTable(true); // true flag keeps dealers first card hidden on table
+				while (!playerStays) {
+					System.out.print(playerName + " - Would you like to Hit or Stay? Enter 'H' or 'S': ");
+					String userResponse = getEitherOrReponse(input, "h", "s");
+					// Player hits
+					if (userResponse.equals("h")) {
+						Card cardDrawn = table.getDeck().dealCard();
+						player.getPlayerHand().addCardToHand(cardDrawn);
+						playerCardTotal += cardDrawn.getValue();
+						System.out.println(playerName + " hits and got a " + cardDrawn.toString() + " and now has " + playerCardTotal);
+						// If card drawn causes bust
+						if (playerCardTotal > 21) {
+							System.out.println(playerName + " Busts!");
+							playerStays = true;
+						}
+						// If card drawn brings total to 21
+						if (playerCardTotal == 21) {
+							System.out.println(playerName + " stays with 21");
+							playerStays = true;
+						}
+					}
+					// Player stays
+					else {
+						System.out.println(playerName + " stays with " + playerCardTotal);
+						playerStays = true;
+					}
+				}
+			}
+		}
+	}
+	
+	
+	
+	// Check with user whether they want to play another round or not
 	public Boolean keepPlaying(Table table, Scanner input) {
+		System.out.println();
 		System.out.print("Would you like to play another Round? 'Y' or 'N': ");
 		String userReponse = getEitherOrReponse(input, "y", "n");
 		if (userReponse.equals("y")) {
@@ -47,244 +162,22 @@ public class BlackJackApp {
 			return false;
 		}
 	}
-	
-	
-	
-	
-	public Table setupGame(Scanner input) {
-		int numOfPlayers = 0;
-		int numOfDecks = 0;
-		
-		System.out.println("Welcome to Blackjack!");
-		System.out.println("How many players will be playing?");
-		numOfPlayers = getUserInt(input);
-		System.out.println("How many decks will this game use?");
-		numOfDecks = getUserInt(input);
-		Table table = new Table (numOfDecks, numOfPlayers, true);
-		for (int i = 0; i < numOfPlayers; i++) {
-			System.out.print("Please name Player " + (i+1) + ": ");
-			String playerName = getUserString(input);
-			table.getPlayersAtTable().get(i).setPlayerName(playerName);
-		}
-		return table;		
-	}
-	
-	
-	
-	public boolean startRound(Table table) {
-		table.getDeck().shuffleDeck();
-		for (int i = 0; i < 2; i++) {
-			for (Player player : table.getPlayersAtTable()) {
-				player.getPlayerHand().addCardToHand(table.getDeck().dealCard());
-			}
-		}	
-		table.printBlackjackTable(true);
-		return checkForBlackJack(table);
-	}
-	
-	
-	public void bettingRound(Table table, Scanner input) {
-		for (Player player : table.getPlayersAtTable()) {
-			boolean playerStays = false;
-			if (player.getPlayerHand().getValueOfCardsInHand() == 21) {
-				playerStays = true;
-			}
-			
-			if (player instanceof Dealer) {
-				table.printBlackjackTable(false);
-				while (!playerStays) {
-					if (player.getPlayerHand().getValueOfCardsInHand() > 16) {
-						System.out.println(player.getPlayerName() + " stays with " + player.getPlayerHand().getValueOfCardsInHand());
-						playerStays = true;
-					}
-					else {
-						Card cardDrawn = table.getDeck().dealCard();
-						player.getPlayerHand().addCardToHand(cardDrawn);
-						System.out.println(player.getPlayerName() + " hits and got a " + cardDrawn.toString() + " and now has " + player.getPlayerHand().getValueOfCardsInHand());
-						if (player.getPlayerHand().getValueOfCardsInHand() > 21) {
-							System.out.println(player.getPlayerName() + " Busts!");
-							playerStays = true;
-						}
-					}
-				}
-			}
-			
-			else {
-				table.printBlackjackTable(true);
-				while (!playerStays) {
-					System.out.print(player.getPlayerName() + " - Would you like to Hit or Stay? Enter 'H' or 'S': ");
-					String userResponse = getEitherOrReponse(input, "h", "s");
-					if (userResponse.equals("s")) {
-						System.out.println(player.getPlayerName() + " stays with " + player.getPlayerHand().getValueOfCardsInHand());
-						playerStays = true;
-					}
-					else {
-						Card cardDrawn = table.getDeck().dealCard();
-						player.getPlayerHand().addCardToHand(cardDrawn);
-						System.out.println(player.getPlayerName() + " hits and got a " + cardDrawn.toString() + " and now has " + player.getPlayerHand().getValueOfCardsInHand());
-						if (player.getPlayerHand().getValueOfCardsInHand() > 21) {
-							System.out.println(player.getPlayerName() + " Busts!");
-							playerStays = true;
-						}
-					}
-				}
-			}
-		}
-	}
-	
-	
-	
-	public boolean checkForBlackJack(Table table) {
-		List<Player> playersWithBlackjack = new ArrayList<>();
-		boolean dealerHasBlackjack = false;
-		boolean roundContinues = true;
-		
-		for (Player player : table.getPlayersAtTable()) {
-			if (player.getPlayerHand().getValueOfCardsInHand() == 21) {
-				playersWithBlackjack.add(player);
-				if (player instanceof Dealer) {
-					dealerHasBlackjack = true;
-				}
-			}
-		}
-		
-		
-		if (playersWithBlackjack.size() > 0) {
-			
-			if (playersWithBlackjack.size() == 1 && dealerHasBlackjack == true) {
-				System.out.println("Dealer has Blackjack. All players lose!");
-				table.printBlackjackTable(false);
-				roundContinues = false;	
-			}
-			
-			if (playersWithBlackjack.size() < table.getPlayersAtTable().size() - 1 && dealerHasBlackjack == false) {
-				if (dealerHasBlackjack == false) {
-					somePlayersHaveBlackjack(playersWithBlackjack);
-				}
-				else {
-					somePlayersAndDealerHaveBlackjack(playersWithBlackjack);
-					roundContinues = false;
-				}
-			}
-		
-			if (playersWithBlackjack.size() == table.getPlayersAtTable().size() -1 && dealerHasBlackjack == false) {
-				if (dealerHasBlackjack == false) {
-					System.out.println("All players have Blackjack and beat the dealer!");;
-					roundContinues = false;
-				}
-				else {
-					System.out.println("All players have Blackjack but push with the dealer who also has Blackjack!");
-					roundContinues = false;
-				}
-			}
-		}
-		else {
-			System.out.println("Nobody has Blackjack!");
-		}
-		return roundContinues;
-	}
-	
-	
-	public void somePlayersHaveBlackjack(List<Player> playersWithBlackjack) {
-		StringBuilder sb = new StringBuilder();
-		
-		if (playersWithBlackjack.size() == 1) {
-			sb.append(playersWithBlackjack.get(0).getPlayerName());
-			sb.append(" has Blackjack and wins! Play will continue for the rest of the players.");
-			System.out.println(sb.toString());
-			return;
-		}
-		
-		
-		
-		for (int i = 0; i < playersWithBlackjack.size(); i++) {
-			if (i == playersWithBlackjack.size() -1) {
-				sb.append("and ");
-				sb.append(playersWithBlackjack.get(i).getPlayerName());
-				sb.append(" have Blackjack and win. Play will continue for the rest of the players");
-			}
-			else {
-				sb.append(playersWithBlackjack.get(i).getPlayerName());
-				sb.append(", ");
-			}
-		}
-		System.out.println(sb.toString());
-	}
-	
-	
-	public void somePlayersAndDealerHaveBlackjack(List<Player> playersWithBlackjack) {
-		StringBuilder sb = new StringBuilder();
-		
-		for (int i = 0; i < playersWithBlackjack.size() - 1; i++) {
-			if (i == playersWithBlackjack.size() -1) {
-				sb.append("and ");
-				sb.append(playersWithBlackjack.get(i).getPlayerName());
-				sb.append(" push with the Dealer who also has Blackjack! All other players lose!");
-			}
-			else {
-				sb.append(playersWithBlackjack.get(i).getPlayerName());
-				sb.append(", ");
-			}
-		}
-		System.out.println(sb.toString());
-	}
-	
-	
-	public void printResults(Table table) {
-		int tableSize = table.getPlayersAtTable().size();
-		Dealer dealer = (Dealer)(table.getPlayersAtTable().get(tableSize -1));
-		int dealerTotal = dealer.getPlayerHand().getValueOfCardsInHand();
-
-		table.printBlackjackTable(false);
-		System.out.println("Dealer finishes with: " + dealerTotal);
-		
-				
-		for (Player player : table.getPlayersAtTable()) {
-			StringBuilder sb = new StringBuilder();
-			if (!(player instanceof Dealer)) {
-				int playerTotal = player.getPlayerHand().getValueOfCardsInHand();
-				sb.append(player.getPlayerName());
-				sb.append(" - ");
-				if (player.getPlayerHand().getCardsInHand().size() == 2 && playerTotal == 21) {
-					sb.append("Blackjack - Win");
-				}
-				else if (playerTotal > dealerTotal && playerTotal <= 21) {
-					sb.append(playerTotal);
-					sb.append(" - Win");
-				}
-				else if (playerTotal > 21) {
-					sb.append(" Bust - Lose");
-				}
-				else if(playerTotal < dealerTotal && dealerTotal <= 21) {
-					sb.append(playerTotal);
-					sb.append(" - Lose");
-				}
-				else if(playerTotal == dealerTotal && dealerTotal <= 21) {
-					sb.append(playerTotal);
-					sb.append(" - Push");
-				}
-				else {
-					sb.append(playerTotal);
-					sb.append(" - Win");
-				}
-				System.out.println(sb.toString());	
-			}
-		}
-	}
-	
-	
-	
 
 	
-
+	// -----------------------------------------------------
+	// ------ User Response Methods Below Here -------------
+	// -----------------------------------------------------
 	
-	public int getUserInt(Scanner input) {
+	public int getUserIntInput(Scanner input, int max) {
 		int userResponse;
 		boolean validEntry = false;
 
 		while (!validEntry) {
 			try {
 				userResponse = input.nextInt();
+				if (userResponse > 4) {
+					throw new InputMismatchException();
+				}
 				validEntry = true;
 				input.nextLine();
 				return userResponse;
@@ -297,7 +190,9 @@ public class BlackJackApp {
 		return -1;
 	}
 	
-	public String getUserString(Scanner input) {
+	
+	
+	public String getUserStringInput(Scanner input) {
 		String userResponse;
 		boolean validEntry = false;
 		
@@ -313,6 +208,8 @@ public class BlackJackApp {
 		}
 		return null;
 	}
+	
+	
 	
 	public String getEitherOrReponse(Scanner input, String option1, String option2) {
 		String userResponse;
