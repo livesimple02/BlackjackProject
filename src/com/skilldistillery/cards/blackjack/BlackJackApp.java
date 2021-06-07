@@ -84,6 +84,13 @@ public class BlackJackApp {
 			String playerName = player.getPlayerName();
 			int playerCardTotal = player.getPlayerHand().getValueOfCardsInHand();
 			boolean playerStays = false;
+			int aceAbleToReduce = 0;
+			
+			for (int i = 0; i < 2; i++) {
+				if (player.getPlayerHand().getCardsInHand().get(i).toString().contains("A")) {
+					aceAbleToReduce += 1;
+				}
+			}
 			
 			if (playerCardTotal == 21) {
 				playerStays = true;
@@ -92,9 +99,28 @@ public class BlackJackApp {
 			
 			// Dealer Turn
 			if (player instanceof Dealer) {
+				boolean firstDealerTurn = true;
 				table.printBlackjackTable(false); // false flag reveals dealers first card at the start of their turn
 				while (!playerStays) {
-					if (playerCardTotal > 16) {
+					if (playerCardTotal == 17 && aceAbleToReduce > 0 && firstDealerTurn == true) {
+						Card cardDrawn = table.getDeck().dealCard();
+						player.getPlayerHand().addCardToHand(cardDrawn);
+						playerCardTotal += cardDrawn.getValue() - 10;
+						// Reduces any drawn aces or starting aces to 1 as needed
+						if (playerCardTotal > 21) {
+							playerCardTotal -= 10;
+							if (!cardDrawn.toString().contains("A")) {
+								aceAbleToReduce -= 1;
+							}
+						}
+						System.out.println(playerName + " hits and got a " + cardDrawn.toString() + " and now has " + playerCardTotal);
+						if (playerCardTotal > 21) {
+							System.out.println(playerName + " Busts!");
+							playerStays = true;
+						}
+					}
+					
+					else if (playerCardTotal > 16 ) {
 						System.out.println(playerName + " stays with " + playerCardTotal);
 						playerStays = true;
 					}
@@ -102,12 +128,20 @@ public class BlackJackApp {
 						Card cardDrawn = table.getDeck().dealCard();
 						player.getPlayerHand().addCardToHand(cardDrawn);
 						playerCardTotal += cardDrawn.getValue();
+						// Reduces any drawn aces or starting aces to 1 as needed
+						if (playerCardTotal > 21 && (cardDrawn.toString().contains("A") || aceAbleToReduce > 0)) {
+							playerCardTotal -= 10;
+							if (!cardDrawn.toString().contains("A")) {
+								aceAbleToReduce -= 1;
+							}
+						}
 						System.out.println(playerName + " hits and got a " + cardDrawn.toString() + " and now has " + playerCardTotal);
 						if (playerCardTotal > 21) {
 							System.out.println(playerName + " Busts!");
 							playerStays = true;
 						}
 					}
+					firstDealerTurn = false;
 				}
 			}
 			
@@ -122,6 +156,13 @@ public class BlackJackApp {
 						Card cardDrawn = table.getDeck().dealCard();
 						player.getPlayerHand().addCardToHand(cardDrawn);
 						playerCardTotal += cardDrawn.getValue();
+						// Reduces any drawn aces or starting aces to 1 as needed
+						if (playerCardTotal > 21 && (cardDrawn.toString().contains("A") || aceAbleToReduce > 0)) {
+							playerCardTotal -= 10;
+							if (!cardDrawn.toString().contains("A")) {
+								aceAbleToReduce -= 1;
+							}
+						}
 						System.out.println(playerName + " hits and got a " + cardDrawn.toString() + " and now has " + playerCardTotal);
 						// If card drawn causes bust
 						if (playerCardTotal > 21) {
